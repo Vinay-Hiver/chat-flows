@@ -8,10 +8,10 @@ import { ListIcon, ListItem } from '../../components/List'
 import { Tag } from '../../components/Tag'
 import { Tooltip } from '../../components/Tooltip'
 import { FlowCanvas } from './FlowCanvas'
-import type { AddTarget, CanvasApi, Measure, TestTrace } from './FlowCanvas'
+import type { AddTarget, CanvasApi, TestTrace } from './FlowCanvas'
 import { Inspector } from './Inspector'
 import { TestPanel } from './TestPanel'
-import { COL, autoLayout, isEnding, newStep, removalCount, removeStep, sameGraph, stepById, stepMeta, stepTitle, subtree, updateStep, validate } from './model'
+import { isEnding, newStep, removalCount, removeStep, sameGraph, stepById, stepMeta, stepTitle, subtree, updateStep, validate } from './model'
 import type { Flow, Graph, Step, StepType } from './model'
 import './FlowBuilder.css'
 
@@ -30,7 +30,7 @@ export function FlowBuilder({ flow, onDraft, onSave, onTurnOn, onExit }: Props) 
   const [graph, setGraph] = useState<Graph>(flow.draft)
   const [name, setName] = useState(flow.name)
   const [editingName, setEditingName] = useState(false)
-  const [measures, setMeasures] = useState<Record<string, Measure>>({})
+  const [heights, setHeights] = useState<Record<string, number>>({})
   const [selected, setSelected] = useState<string | null>(null)
   const [panel, setPanel] = useState<Panel>(null)
   const [picker, setPicker] = useState<{ target: AddTarget; at: { x: number; y: number } } | null>(null)
@@ -39,7 +39,6 @@ export function FlowBuilder({ flow, onDraft, onSave, onTurnOn, onExit }: Props) 
   const [confirm, setConfirm] = useState<{ title: string; text: string; run: () => void } | null>(null)
   const [test, setTest] = useState<{ startAt: string | null; key: number }>({ startAt: null, key: 0 })
   const [trace, setTrace] = useState<TestTrace | undefined>()
-  const [needsLayout, setNeedsLayout] = useState(() => flow.draft.steps.every((s) => s.x === 0 && s.y === 0))
   const [fitPending, setFitPending] = useState(true)
   const api = useRef<CanvasApi | null>(null)
   const pickerAnchor = useRef<HTMLDivElement>(null)
@@ -52,17 +51,10 @@ export function FlowBuilder({ flow, onDraft, onSave, onTurnOn, onExit }: Props) 
 
   useEffect(() => { onDraft(graph, name) }, [graph, name]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Lay out a new template or seed once every card has been measured, then fit it on screen.
+  // Fit the flow on screen once every card has been measured.
   useEffect(() => {
-    if (needsLayout && graph.steps.every((s) => measures[s.id])) {
-      setGraph((g) => autoLayout(g, Object.fromEntries(Object.entries(measures).map(([k, m]) => [k, m.h]))))
-      setNeedsLayout(false)
-      setFitPending(true)
-    }
-  }, [needsLayout, measures, graph.steps])
-  useEffect(() => {
-    if (fitPending && !needsLayout && graph.steps.every((s) => measures[s.id])) { api.current?.fit(); setFitPending(false) }
-  }, [fitPending, needsLayout, measures, graph.steps])
+    if (fitPending && graph.steps.every((s) => heights[s.id])) { api.current?.fit(); setFitPending(false) }
+  }, [fitPending, heights, graph.steps])
   // Once everything is fixed, the red highlighting can go.
   useEffect(() => { if (showErrors && errors.length === 0) { setShowErrors(false); setBanner({ tone: 'success', text: 'All branches end somewhere now. You can save the flow.' }) } }, [errors.length, showErrors])
 
@@ -74,7 +66,7 @@ export function FlowBuilder({ flow, onDraft, onSave, onTurnOn, onExit }: Props) 
     const prev = past.current.pop()
     if (prev) { setGraph(prev); setBanner({ tone: 'info', text: 'Undone' }) }
   }, [])
-  const onMeasure = useCallback((id: string, m: Measure) => setMeasures((x) => ({ ...x, [id]: m })), [])
+  const onMeasure = useCallback((id: string, h: number) => setHeights((x) => ({ ...x, [id]: h })), [])
   const select = (id: string | null) => {
     setSelected(id)
     setPicker(null)
@@ -83,31 +75,20 @@ export function FlowBuilder({ flow, onDraft, onSave, onTurnOn, onExit }: Props) 
   }
   const goTo = (id: string) => { setSelected(id); setPanel('step'); api.current?.focus(id) }
 
+  // The tree lays itself out, so a new step only needs wiring in: after an open output, or between two steps.
   const addStep = (type: StepType, t: AddTarget) => {
     const parent = stepById(graph, t.stepId)
-    if (!parent) return
-    const out = parent.outs.find((o) => o.id === t.outId)!
-    const oy = measures[parent.id]?.outs[out.id] ?? 60
-    const created = newStep(type, parent.x + COL, parent.y + oy - 24)
-    const old = out.to
-    commit((g) => {
-      let steps = g.steps
-      if (t.insert && old) {
-        const moving = new Set(subtree(g, old))
-        steps = steps.map((s) => (moving.has(s.id) ? { ...s, x: s.x + COL } : s))
-        if (created.outs[0]) created.outs[0].to = old
-      } else {
-        // Nudge down until it doesn't sit on another card.
-        const hit = () => steps.some((s) => Math.abs(s.x - created.x) < 260 && created.y < s.y + (measures[s.id]?.h ?? 120) + 16 && created.y + 140 > s.y)
-        let n = 0
-        while (hit() && n++ < 40) created.y += 40
-      }
-      steps = steps.map((s) => (s.id === parent.id ? { ...s, outs: s.outs.map((o) => (o.id === out.id ? { ...o, to: created.id } : o)) } : s))
-      return { steps: [...steps, created] }
-    })
+    const out = parent?.outs.find((o) => o.id === t.outId)
+    if (!parent || !out) return
+    const created = newStep(type)
+    if (t.insert && out.to && created.outs[0]) created.outs[0].to = out.to
+    commit((g) => ({
+      steps: [...g.steps.map((s) => (s.id === parent.id ? { ...s, outs: s.outs.map((o) => (o.id === out.id ? { ...o, to: created.id } : o)) } : s)), created],
+    }))
     setPicker(null)
     setSelected(created.id)
     setPanel((p) => (p === 'test' ? 'test' : 'step'))
+    requestAnimationFrame(() => requestAnimationFrame(() => api.current?.focus(created.id)))
   }
 
   const deleteStep = (id: string) => {
@@ -138,11 +119,6 @@ export function FlowBuilder({ flow, onDraft, onSave, onTurnOn, onExit }: Props) 
       const n = subtree(graph, out.to).length
       setConfirm({ title: `Remove “${out.label || 'Untitled'}”?`, text: `Its branch has ${n} step${n > 1 ? 's' : ''}. They’ll be deleted too.`, run })
     } else run()
-  }
-
-  const tidy = () => {
-    commit((g) => autoLayout(g, Object.fromEntries(Object.entries(measures).map(([k, m]) => [k, m.h]))))
-    setFitPending(true)
   }
 
   const save = () => {
@@ -202,7 +178,6 @@ export function FlowBuilder({ flow, onDraft, onSave, onTurnOn, onExit }: Props) 
             <Icon name={errors.length ? 'erroricon' : 'rightwithcircle'} size={16} />
             {errors.length ? `${errors.length} to fix` : 'Ready to save'}
           </button>
-          <Tooltip content="Tidy up the layout" placement="bottom" portal><Button variant="ghost" size="sm" iconOnly aria-label="Tidy up layout" onClick={tidy}><Icon name="alignment2" size={16} /></Button></Tooltip>
           <Button variant="secondary" size="sm" iconLeft={<Icon name="view" size={16} />} onClick={() => (panel === 'test' ? closeTest() : startTest(null))}>{panel === 'test' ? 'Stop test' : 'Test flow'}</Button>
           <Button variant="primary" size="sm" onClick={save} disabled={!dirty && !!flow.saved}>Save flow</Button>
         </div>
@@ -212,10 +187,9 @@ export function FlowBuilder({ flow, onDraft, onSave, onTurnOn, onExit }: Props) 
         <div className="fb-stage">
           <FlowCanvas
             graph={graph} selectedId={selected} onSelect={select}
-            onMove={(id, x, y) => setGraph((g) => updateStep(g, id, (s) => ({ ...s, x, y })))}
             onAdd={(target, at) => setPicker({ target, at })} pendingAdd={picker?.target}
             issues={issues} showErrors={showErrors} trace={panel === 'test' ? trace : undefined}
-            measures={measures} onMeasure={onMeasure} apiRef={api}
+            heights={heights} onMeasure={onMeasure} apiRef={api}
           />
           {banner && (
             <div className={`fb-banner is-${banner.tone}`} role="status">
@@ -226,7 +200,7 @@ export function FlowBuilder({ flow, onDraft, onSave, onTurnOn, onExit }: Props) 
             </div>
           )}
           {graph.steps.length === 1 && !picker && (
-            <div className="fb-empty">Press <b>Add next step</b> beside Start to begin. Each button and branch gets its own path.</div>
+            <div className="fb-empty">Press <b>Add step</b> under Start to begin. Each button and branch gets its own path.</div>
           )}
         </div>
 
