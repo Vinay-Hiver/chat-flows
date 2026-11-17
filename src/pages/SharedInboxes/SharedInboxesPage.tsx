@@ -17,6 +17,8 @@ import type { SubNavChannelId } from '../../patterns/SubNav/data'
 import { sharedInboxChannels } from './data'
 import type { Inbox } from './data'
 import { WidgetDesignPage } from '../WidgetDesign/WidgetDesignPage'
+import { ChatCsatPage } from '../ChatCsat/ChatCsatPage'
+import { FlowsPage } from '../Flows/FlowsPage'
 import { CreateChatInboxPage } from '../CreateChatInbox/CreateChatInboxPage'
 import './SharedInboxesPage.css'
 
@@ -100,7 +102,7 @@ export function SharedInboxesPage({ channel: initialChannel = 'email', inboxId, 
         onSwitch={(id) => { const next = (lists[open.channel] ?? []).find((i) => i.id === id); if (next) setOpen({ channel: open.channel, inbox: next }) }}
       />
     )
-    content = selected.id === 'widgetDesign' ? <WidgetDesign /> : (
+    content = selected.id === 'widgetDesign' ? <WidgetDesign /> : open.channel === 'chat' && selected.id === 'csat' ? <ChatCsatPage /> : open.channel === 'chat' && selected.id === 'flows' ? <FlowsPage /> : (
       <div className="hot-shared-inboxes__page">
         <PageBar title={selected.label} />
         <div className="hot-shared-inboxes__placeholder">{selected.label} page</div>

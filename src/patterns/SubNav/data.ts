@@ -43,6 +43,7 @@ export const subNavLibrary: Record<string, SubNavItemDef> = {
   conversationRules: { id: 'conversationRules', label: 'Conversation Rules', icon: 'conversationrules' },
   aiAgent: { id: 'aiAgent', label: 'AI Agent', icon: 'aiagent' },
   preChatForm: { id: 'preChatForm', label: 'Pre-chat Form', icon: 'file' },
+  flows: { id: 'flows', label: 'Flows', icon: 'flows' }, // added by hand to iconData (Chat Flows PRD); not in the HOT set yet
   widgetDesign: { id: 'widgetDesign', label: 'Widget Design', icon: 'widgetdesign' },
   transcript: { id: 'transcript', label: 'Transcript', icon: 'transcript' },
   widgetScript: { id: 'widgetScript', label: 'Widget Script', icon: 'code3' }, // the DS calls it Code 3
@@ -93,7 +94,7 @@ export const subNavChannels: Record<SubNavChannelId, SubNavChannelDef> = {
   },
   chat: {
     id: 'chat', label: 'Chat', subtitle: false, switcher: 'box', defaultSelected: 'aiAgent',
-    items: ['aiAgent', 'members', 'autoAssignment', 'preChatForm', 'widgetDesign', 'transcript', 'widgetScript', 'settings'],
+    items: ['aiAgent', 'members', 'autoAssignment', 'preChatForm', 'flows', 'widgetDesign', 'csat', 'transcript', 'widgetScript', 'settings'],
   },
   voice: {
     id: 'voice', label: 'Voice', subtitle: false, switcher: 'box', defaultSelected: 'members',
