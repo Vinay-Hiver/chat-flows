@@ -11,6 +11,7 @@ import { Tooltip } from '../../components/Tooltip'
 import { ListRadio } from '../../components/List'
 import { PageBar } from '../SharedInboxes/SharedInboxesPage'
 import { FlowBuilder } from './FlowBuilder'
+import { FlowBuilder as FreeFlowBuilder } from './free/FlowBuilder'
 import { customFields, fieldTypeIcon, fieldTypeLabel, sameGraph, seedFlows, templateGraph, templates, uid, validate } from './model'
 import type { Flow, TemplateId } from './model'
 import './FlowBuilder.css'
@@ -19,7 +20,10 @@ import './FlowBuilder.css'
 let store: Flow[] = seedFlows()
 const today = () => new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 
-export function FlowsPage() {
+/** `tree` (default) lays the flow out top to bottom; `free` is the drag-anywhere canvas. */
+export type FlowsVariant = 'tree' | 'free'
+
+export function FlowsPage({ variant = 'tree' }: { variant?: FlowsVariant }) {
   const [flows, setFlowsState] = useState<Flow[]>(store)
   const setFlows = (fn: (f: Flow[]) => Flow[]) => setFlowsState((f) => (store = fn(f)))
   const [openId, setOpenId] = useState<string | null>(null)
@@ -31,8 +35,9 @@ export function FlowsPage() {
 
   const open = flows.find((f) => f.id === openId)
   if (open) {
+    const Builder = variant === 'free' ? FreeFlowBuilder : FlowBuilder
     return (
-      <FlowBuilder
+      <Builder
         key={open.id} flow={open}
         onDraft={(draft, name) => patch(open.id, { draft, name })}
         onSave={(graph, name) => patch(open.id, { saved: graph, draft: graph, name, editedAt: today() })}

@@ -2,7 +2,8 @@
 // Chat NPS (Product Spec: NPS style chat CSAT): Admin › Chat-Support › CSAT sets the question; answers show in Conversations
 // (thread and the NPS section of the right panel), Customers (Accounts, Contacts, an account) and Analytics › NPS.
 // /chat-interaction is the visitor's side: an empty page with the launcher and the full chat flow.
-// /flows opens straight on Chat-Support > Flows (Product Spec: Chat Flows in Omni).
+// /tree and /normal open straight on Chat-Support > Flows (Product Spec: Chat Flows in Omni): /tree with the top-to-bottom
+// tree builder, /normal with the free drag-anywhere canvas. /flows is the same as /tree.
 // /options opens straight on Chat-Support > Widget Design with the four layout options and their switcher.
 import { useState } from 'react'
 import { AnalyticsPage } from './pages/Analytics/AnalyticsPage'
@@ -30,8 +31,8 @@ export default function App() {
   if (route.page === 'admin' && isOptions) {
     return <SharedInboxesPage channel="chat" inboxId="chat-support" settingsItem="widgetDesign" widgetDesign={WidgetDesignOptionsPage} onNavigate={navigate} />
   }
-  if (route.page === 'admin' && path === '/flows') {
-    return <SharedInboxesPage channel="chat" inboxId="chat-support" settingsItem="flows" onNavigate={navigate} />
+  if (route.page === 'admin' && (path === '/tree' || path === '/flows' || path === '/normal')) {
+    return <SharedInboxesPage channel="chat" inboxId="chat-support" settingsItem="flows" flowsVariant={path === '/normal' ? 'free' : 'tree'} onNavigate={navigate} />
   }
   if (route.page === 'customers') return <CustomersPage key={key} onNavigate={navigate} target={route.target} />
   if (route.page === 'analytics') return <AnalyticsPage key={key} onNavigate={navigate} />

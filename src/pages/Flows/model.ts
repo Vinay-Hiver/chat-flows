@@ -138,6 +138,38 @@ export const removalCount = (g: Graph, id: string) => {
   return s.outs.length === 1 ? 1 : subtree(g, id).length
 }
 
+// Used by the free-canvas builder (/normal) only.
+/** Lays the tree out left to right. `heights` are the measured heights of the cards. */
+export const COL = 340
+const GAP = 36
+export function autoLayout(g: Graph, heights: Record<string, number>): Graph {
+  const pos: Record<string, { x: number; y: number }> = {}
+  const h = (id: string) => heights[id] ?? 120
+  const span = (id: string): number => {
+    const s = stepById(g, id)!
+    const kids = s.outs.map((o) => o.to).filter(Boolean) as string[]
+    const own = h(id) + GAP
+    const empties = s.outs.filter((o) => !o.to).length
+    const kidsSpan = kids.reduce((a, k) => a + span(k), 0) + (kids.length > 0 ? empties * 44 : 0)
+    return Math.max(own, kidsSpan)
+  }
+  const place = (id: string, depth: number, top: number) => {
+    const s = stepById(g, id)!
+    const total = span(id)
+    pos[id] = { x: depth * COL, y: top + total / 2 - h(id) / 2 }
+    let y = top
+    for (const o of s.outs) {
+      if (!o.to) { if (s.outs.some((x) => x.to)) y += 44; continue }
+      place(o.to, depth + 1, y)
+      y += span(o.to)
+    }
+  }
+  const start = g.steps.find((s) => s.type === 'start')
+  if (!start) return g
+  place(start.id, 0, 0)
+  return { steps: g.steps.map((s) => (pos[s.id] ? { ...s, ...pos[s.id] } : s)) }
+}
+
 // ---------- Validation ----------
 
 export type Issue = { stepId: string; outId?: string; severity: 'error' | 'warning'; message: string }

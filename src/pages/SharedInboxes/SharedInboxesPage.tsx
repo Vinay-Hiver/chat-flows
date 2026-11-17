@@ -19,6 +19,7 @@ import type { Inbox } from './data'
 import { WidgetDesignPage } from '../WidgetDesign/WidgetDesignPage'
 import { ChatCsatPage } from '../ChatCsat/ChatCsatPage'
 import { FlowsPage } from '../Flows/FlowsPage'
+import type { FlowsVariant } from '../Flows/FlowsPage'
 import { CreateChatInboxPage } from '../CreateChatInbox/CreateChatInboxPage'
 import './SharedInboxesPage.css'
 
@@ -44,6 +45,8 @@ export type SharedInboxesPageProps = {
   widgetDesign?: ComponentType
   /** Called with the id of the Main nav item that was pressed (for example `conversations`). */
   onNavigate?: (id: string) => void
+  /** Which flow builder the Flows page opens: the top-to-bottom tree (default) or the free canvas. */
+  flowsVariant?: FlowsVariant
 }
 
 /**
@@ -51,7 +54,7 @@ export type SharedInboxesPageProps = {
  * Pressing an inbox opens its settings: the sub-nav then lists that channel's settings pages, from the Sub-nav database.
  * Temporary: the settings pages themselves are not built yet, so the content shows a placeholder.
  */
-export function SharedInboxesPage({ channel: initialChannel = 'email', inboxId, settingsItem, onAdminNavigate, onNavigate, widgetDesign: WidgetDesign = WidgetDesignPage }: SharedInboxesPageProps) {
+export function SharedInboxesPage({ channel: initialChannel = 'email', inboxId, settingsItem, onAdminNavigate, onNavigate, widgetDesign: WidgetDesign = WidgetDesignPage, flowsVariant }: SharedInboxesPageProps) {
   const [channelId, setChannelId] = useState<SubNavChannelId>(initialChannel)
   const [lists, setLists] = useState<Record<string, Inbox[]>>(() => Object.fromEntries(sharedInboxChannels.map((c) => [c.id, c.inboxes])))
   const found = inboxId ? sharedInboxChannels.flatMap((c) => c.inboxes.map((i) => ({ channel: c.id, inbox: i }))).find((x) => x.inbox.id === inboxId) : undefined
@@ -102,7 +105,7 @@ export function SharedInboxesPage({ channel: initialChannel = 'email', inboxId, 
         onSwitch={(id) => { const next = (lists[open.channel] ?? []).find((i) => i.id === id); if (next) setOpen({ channel: open.channel, inbox: next }) }}
       />
     )
-    content = selected.id === 'widgetDesign' ? <WidgetDesign /> : open.channel === 'chat' && selected.id === 'csat' ? <ChatCsatPage /> : open.channel === 'chat' && selected.id === 'flows' ? <FlowsPage /> : (
+    content = selected.id === 'widgetDesign' ? <WidgetDesign /> : open.channel === 'chat' && selected.id === 'csat' ? <ChatCsatPage /> : open.channel === 'chat' && selected.id === 'flows' ? <FlowsPage key={flowsVariant} variant={flowsVariant} /> : (
       <div className="hot-shared-inboxes__page">
         <PageBar title={selected.label} />
         <div className="hot-shared-inboxes__placeholder">{selected.label} page</div>

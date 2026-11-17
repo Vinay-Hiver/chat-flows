@@ -1,0 +1,18 @@
+/* Free-canvas builder (/normal) only: ports on the right edge of each card, dragging, and ghost lines. Scoped so the tree builder is untouched. */
+.fb-free .fb-ghost-line { stroke: var(--slateBorderDefault); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.fb-free .show-errors .fb-ghost-line, .fb-free .fb-ghost-line.is-stuck { stroke: var(--errorBorderDefault); }
+.fb-free .fb-ghost { transform: none; margin-top: -16px; }
+.fb-free .fb-step { cursor: grab; }
+.fb-free .fb-canvas.is-node { cursor: grabbing; }
+.fb-free .fb-step__in { position: absolute; left: -5px; top: 19px; width: 8px; height: 10px; border-radius: 2px; background: var(--slateBorderDark); }
+.fb-free .fb-ports { display: flex; flex-direction: column; gap: 6px; padding: 0 0 12px 12px; }
+.fb-free .fb-step--start .fb-ports { padding-top: 0; }
+.fb-free .fb-port { position: relative; display: flex; justify-content: flex-end; align-items: center; min-height: 30px; }
+.fb-free .fb-port__label { max-width: 230px; margin-right: 12px; padding: 5px 10px; border: 1px solid var(--tone-bd); border-radius: 8px; background: var(--tone-bg); font-size: 13px; line-height: 18px; color: var(--slateTextTitle); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fb-free .fb-port__label b { font-weight: var(--fontWeightMedium); }
+.fb-free .fb-port.is-fallback .fb-port__label { border-style: dashed; background: var(--slateSurfaceWhite); color: var(--slateTextSubtle); }
+.fb-free .fb-port__dot { position: absolute; right: -6px; width: 10px; height: 10px; border: 2px solid var(--slateSurfaceWhite); border-radius: 50%; background: var(--slateBorderDark); box-shadow: 0 0 0 1px var(--slateBorderDark); }
+.fb-free .fb-port.is-empty .fb-port__dot { background: var(--slateSurfaceWhite); }
+.fb-free .show-errors .fb-port.is-empty .fb-port__dot { box-shadow: 0 0 0 1px var(--errorBorderDefault); }
+.fb-free .fb-step__end { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--slateBorderLight); border-radius: 0 0 10px 10px; background: var(--slateSurfaceSubtle); font-size: 12px; line-height: 18px; color: var(--slateTextSubtle); }
+.fb-free .fb-step__end svg { color: var(--successTextBody); }
