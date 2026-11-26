@@ -4,7 +4,6 @@ import { Button } from '../../components/Button'
 import { Tooltip } from '../../components/Tooltip'
 import { Tag } from '../../components/Tag'
 import { Icon } from '../../icons/Icon'
-import { MessagePlusSquare } from '../../icons/MessagePlusSquare'
 import type { IconName } from '../../icons/iconData'
 import { RightPanel, RightPanelSection, RightPanelTop } from './RightPanel'
 import { ActivityNotes } from './ActivityNotes'
@@ -158,7 +157,7 @@ export function LinkedConversationCard({ conversation: c, onUnlink: unlinkHandle
 
 function linkedConversationsSection(linked: LinkedConversation[], onLinkClick?: () => void, onViewAll?: () => void, onUnlink?: (id: string) => void, onOpen?: (id: string) => void) {
   return (
-    <RightPanelSection key="linked" id="linked" title="Linked conversations" icon={<MessagePlusSquare />} defaultExpanded>
+    <RightPanelSection key="linked" id="linked" title="Linked conversations" icon="messageplussquare" defaultExpanded>
       {/* paddingTop matches the section's 16px bottom padding, so the content sits evenly between header and edge. */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', paddingTop: 16 }}>
         {/* No Link button when linking is not offered (for example inside the conversation viewer) */}

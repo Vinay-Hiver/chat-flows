@@ -6,3 +6,4 @@
 - Use the components, `var(--tokens)` for colours and `<Icon>` for icons. No hex colours, no hand-drawn SVGs, no other UI library.
 - If a component you need is missing, tell the user which one instead of drawing a copy.
 - The `sample…` data files only fill navigation with example entries; replace them with real items.
+- Per-component details are in `docs/<Name>.md`; `PRODUCT-GUIDE.md` has product conventions. Both come from hot-storybook's starter.

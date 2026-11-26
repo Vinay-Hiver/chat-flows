@@ -94,7 +94,7 @@ export const subNavChannels: Record<SubNavChannelId, SubNavChannelDef> = {
   },
   chat: {
     id: 'chat', label: 'Chat', subtitle: false, switcher: 'box', defaultSelected: 'aiAgent',
-    items: ['aiAgent', 'members', 'autoAssignment', 'preChatForm', 'flows', 'widgetDesign', 'csat', 'transcript', 'widgetScript', 'settings'],
+    items: ['aiAgent', 'members', 'autoAssignment', 'preChatForm', 'flows', 'widgetDesign', 'transcript', 'widgetScript', 'settings'],
   },
   voice: {
     id: 'voice', label: 'Voice', subtitle: false, switcher: 'box', defaultSelected: 'members',

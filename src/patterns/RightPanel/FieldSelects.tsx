@@ -2,6 +2,8 @@ import { useId, useRef, useState } from 'react'
 import { Avatar } from '../../components/Avatar'
 import { Dropdown } from '../../components/Dropdown'
 import { Popover } from '../../components/Popover'
+import { Tag } from '../../components/Tag'
+import type { ChipColor } from '../../components/Tag'
 import { Icon } from '../../icons/Icon'
 import type { IconName } from '../../icons/iconData'
 import { sampleAssignees, statusOptions } from './data/options'
@@ -46,14 +48,18 @@ function SelectValue({ icon, label, shown, children, open, onOpenChange, ariaLab
 export type AssigneeFieldProps = {
   /** The `value` of the person who owns the conversation, or `none`. */
   value?: string
-  /** The starting value when the field manages itself (for example `none` for an unassigned conversation). */
-  defaultValue?: string
   onChange?: (value: string) => void
   people?: Assignee[]
+  /** The name of the field. Default is "Assignee". */
+  label?: string
+  /** The icon before the name. Default is `assigned`. */
+  icon?: IconName
+  /** Which row starts selected when no `value` is given: a person's `value`, or `none`. Default is the first person. */
+  defaultValue?: string
 }
 
 /** The Assignee field: pressing the name opens a searchable list of people (with a "None" row) in a Dropdown. */
-export function AssigneeField({ value, defaultValue, onChange, people = sampleAssignees }: AssigneeFieldProps) {
+export function AssigneeField({ value, onChange, people = sampleAssignees, label = 'Assignee', icon = 'assigned', defaultValue }: AssigneeFieldProps) {
   const [inner, setInner] = useState(value ?? defaultValue ?? people[0]?.value ?? 'none')
   const [open, setOpen] = useState(false)
   const current = value ?? inner
@@ -61,16 +67,21 @@ export function AssigneeField({ value, defaultValue, onChange, people = sampleAs
   const name = person ? person.label.replace(/ \(Me\)$/, '') : 'None'
   return (
     <SelectValue
-      icon="assigned" label="Assignee" open={open} onOpenChange={setOpen} ariaLabel={`Assignee: ${name}`}
+      icon={icon} label={label} open={open} onOpenChange={setOpen} ariaLabel={`${label}: ${name}`}
       shown={person ? <Avatar initial={name} size="small" color={person.color} /> : <Icon name="user" size={14} />}
     >
       <Dropdown
-        variant="avatar" searchable searchPlaceholder="Search Assignee" value={current}
-        options={[{ value: 'none', label: 'None', icon: 'user', iconBackground: true }, ...people.map((p) => ({ value: p.value, label: p.label, color: p.color, status: p.status }))]}
+        variant="avatar" searchable searchPlaceholder={`Search ${label}`} value={current}
+        options={[{ value: 'none', label: 'None', icon: 'user', iconBackground: true }, ...[...people].sort((a, b) => a.label.localeCompare(b.label)).map((p) => ({ value: p.value, label: p.label, color: p.color, status: p.status }))]}
         onChange={(v) => { const next = String(v); setInner(next); onChange?.(next); setOpen(false) }}
       />
     </SelectValue>
   )
+}
+
+/** The Co-assignee field: the same list as Assignee, with the Co-assignee icon, and it starts as None. */
+export function CoAssigneeField(props: Omit<AssigneeFieldProps, 'label' | 'icon'>) {
+  return <AssigneeField defaultValue="none" {...props} label="Co-assignee" icon="coassignee" />
 }
 
 export type StatusFieldProps = {
@@ -94,5 +105,49 @@ export function StatusField({ value, onChange }: StatusFieldProps) {
         onChange={(v) => { const next = v as 'open' | 'pending' | 'closed'; setInner(next); onChange?.(next); setOpen(false) }}
       />
     </SelectValue>
+  )
+}
+
+export type TagOption = { value: string; label: string; color?: ChipColor }
+
+export type TagsFieldProps = {
+  /** Every tag that can be added. */
+  options: TagOption[]
+  /** The values of the tags on the conversation. */
+  value: string[]
+  onChange: (value: string[]) => void
+}
+
+/**
+ * The Tags field: the conversation's tags (each removable) and an "Add" chip. "Add" opens a searchable
+ * checkbox list of every tag; ticking and unticking only takes effect on Apply.
+ */
+export function TagsField({ options, value, onChange }: TagsFieldProps) {
+  const ref = useRef<HTMLButtonElement>(null)
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState<string[]>(value)
+  const openList = () => { setDraft(value); setOpen(true) }
+  const tags = value.map((v) => options.find((o) => o.value === v)).filter((o): o is TagOption => !!o)
+  return (
+    <div className="hot-rp-field hot-rp-field--tags">
+      <div className="hot-rp-field__label"><Icon name="tag" size={14} /><span>Tags</span></div>
+      <div className="hot-rp-field__value hot-rp-tags">
+        {tags.map((t) => (
+          <Tag key={t.value} color={t.color} onRemove={() => onChange(value.filter((v) => v !== t.value))} removeLabel={`Remove ${t.label}`}>{t.label}</Tag>
+        ))}
+        {/* Temporary, as in the storybook: a clickable "Add" chip is not built, so a Tag sits inside a plain button. */}
+        <button ref={ref} type="button" aria-label="Add tag" aria-expanded={open} className="hot-rp-tags__add" onClick={() => (open ? setOpen(false) : openList())}>
+          <Tag iconLeft={<Icon name="add" size={14} />}>Add</Tag>
+        </button>
+        <Popover open={open} onClose={() => setOpen(false)} anchorRef={ref} placement="bottom-end">
+          <Dropdown
+            variant="checkbox" searchable searchPlaceholder="Search Tags" value={draft}
+            options={options.map((o) => ({ value: o.value, label: o.label }))}
+            onChange={(v) => setDraft(v as string[])}
+            actions={{ onCancel: () => setOpen(false), onApply: () => { onChange(draft); setOpen(false) } }}
+          />
+        </Popover>
+      </div>
+    </div>
   )
 }

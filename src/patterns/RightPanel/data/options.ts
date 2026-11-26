@@ -13,13 +13,10 @@ export const statusOptions: StatusOption[] = [
 export type Assignee = { value: string; label: string; color: AvatarColor; status?: 'online' | 'offline' }
 export const sampleAssignees: Assignee[] = [
   { value: 'john-cole', label: 'John Cole (Me)', color: 'red' },
-  { value: 'abhay', label: 'Abhay', color: 'yellow' },
-  { value: 'adithya', label: 'Adithya S', color: 'grey' },
-  { value: 'aishwarya', label: 'Aishwarya test sm 2', color: 'grey' },
-  { value: 'akash-m', label: 'Akash M', color: 'yellow' },
-  { value: 'akash-mishra', label: 'Akash Mishra', color: 'purple' },
-  { value: 'akshaya', label: 'Akshaya s', color: 'grey' },
-  { value: 'aman', label: 'Aman M', color: 'orange' },
-  { value: 'amshika', label: 'Amshika', color: 'violet' },
-  { value: 'ankita', label: 'Ankita T', color: 'purple' },
+  { value: 'priya', label: 'Priya Nair', color: 'yellow' },
+  { value: 'rohan', label: 'Rohan Iyer', color: 'grey' },
+  { value: 'emma', label: 'Emma Clarke', color: 'purple' },
+  { value: 'liam', label: 'Liam Carter', color: 'orange' },
+  { value: 'sophie', label: 'Sophie Turner', color: 'violet' },
+  { value: 'daniel', label: 'Daniel Brooks', color: 'grey' },
 ]
